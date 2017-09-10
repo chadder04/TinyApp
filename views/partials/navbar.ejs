@@ -1,7 +1,13 @@
 <div class="header clearfix">
     <nav>
         <ul class="nav nav-pills pull-right">
-            <li role="presentation"><a href="/">Home</a></li>
+            <% if (siteData.userLoggedIn) { %>
+                <li role="presentation"><p class="navbar-text"><%= siteData.userLoggedInEmail %></p></li>
+                <li role="presentation"><a href="/logout">Logout</a></li>
+            <% } else { %>
+                <li role="presentation"><a href="/login">Login</a></li>
+                <li role="presentation"><a href="/register">Register</a></li>
+            <% } %>
         </ul>
         <h3 class="text-muted">TinyApp URL Shortener</h3>
     </nav>
