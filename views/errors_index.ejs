@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <%- include('partials/_head') %>
+</head>
+
+<body>
+    <div class="container">
+        <%- include('partials/_navbar') %>
+
+        <div class="jumbotron">
+            <h1>Oh nooo!!! Something went wrong!</h1>
+            <p class="lead">Error.. error.. something went wrong!</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="alert alert-danger" role="alert"><%= errorMsg %></div>
+            </div>
+        </div>
+
+        <%- include('partials/_footer') %>
+    </div>
+</body>
+
+</html>
