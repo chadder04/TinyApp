@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 8080;
 
 // Local siteData - only persists while app.js is running server. 
 const siteData = {
-    userLoggedIn: true,
+    userLoggedIn: false,
     userLoggedInEmail: 'chadgarrett_@hotmail.com',
     userSessionData: [],
     userTable: [
@@ -248,7 +248,13 @@ app.get('/u/:id', (req, res) => {
  *      returns HTML with a relevant error message
  */
 app.post('/login', (req, res) => {
-    
+    if (!req.body.inputUsername) {
+        res.render('errors_index', { errorMsg: 'Sorry, you must enter an appropriate username!', siteData: siteData });
+    } else {
+        siteData.userLoggedIn = true;
+        siteData.userLoggedInEmail = req.body.inputUsername;
+        res.redirect('/urls');
+    }
 })
 
 /*
@@ -317,7 +323,9 @@ app.get('/register', (req, res) => {
  * redirects to /urls
  */
 app.post('/logout', (req, res) => {
-    
+    siteData.userLoggedIn = false;
+    siteData.userLoggedInEmail = '';
+    res.redirect('/urls');
 })
 
 app.get('/logout', (req, res) => {
