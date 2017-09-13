@@ -258,13 +258,19 @@ app.post('/login', (req, res) => {
             res.status(400);
             return res.render('login', { siteData: siteData });
         } else if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
-            siteData.userLoggedIn = true;
-            siteData.userLoggedInUserID = siteData.userTable[userIndex].id;
-            res.cookie('loggedUserID', siteData.userTable[userIndex].id, { expires: new Date(Date.now() + 900000), httpOnly: true });
-            return res.redirect('/urls');
+            if (req.body.inputPassword === siteData.userTable[userIndex].userPassword) {
+                siteData.userLoggedIn = true;
+                siteData.userLoggedInUserID = siteData.userTable[userIndex].id;
+                res.cookie('loggedUserID', siteData.userTable[userIndex].id, { expires: new Date(Date.now() + 900000), httpOnly: true });
+                return res.redirect('/');
+            } else {
+                siteData.errorMsgs.push('Sorry, Username and Password do not match!');
+                res.status(403);
+                return res.render('login', { siteData: siteData });
+            }
         } else {
             siteData.errorMsgs.push('Sorry, this user does not exist in the database!');
-            res.status(400);
+            res.status(403);
             return res.render('login', { siteData: siteData });
         }
     }
