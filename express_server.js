@@ -252,7 +252,7 @@ app.get('/u/:id', (req, res) => {
  */
 app.post('/login', (req, res) => {
     let whiteSpaceRegExp = /^\s*$/;
-    for (userIndex in siteData.userTable) {
+    for (let userIndex in siteData.userTable) {
         if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
             siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to login!');
             res.status(400);
@@ -366,12 +366,15 @@ app.get('/register', (req, res) => {
  */
 app.post('/logout', (req, res) => {
     siteData.userLoggedIn = false;
-    siteData.userLoggedInEmail = '';
-    res.clearCookie('loggedUsername');
+    siteData.userLoggedInUserID = '';
+    res.clearCookie('loggedUserID');
     res.redirect('/urls');
 })
 
 app.get('/logout', (req, res) => {
+    siteData.userLoggedIn = false;
+    siteData.userLoggedInUserID = '';
+    res.clearCookie('loggedUserID');
     res.redirect('/urls');
 })
 
