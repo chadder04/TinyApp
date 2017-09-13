@@ -299,9 +299,11 @@ app.post('/register', (req, res, next) => {
         let whiteSpaceRegExp = /^\s*$/;
         if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
             siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to register!');
+            res.status(400);
             return res.render('register', { siteData: siteData });
         } else if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
             siteData.errorMsgs.push('Sorry, this user already exists in the database!');
+            res.status(400);
             return res.render('register', { siteData: siteData });
         } else {
             let randID = generateRandomString();
