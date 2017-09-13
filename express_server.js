@@ -4,6 +4,7 @@
 const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
 const generateRandomString = require('./modules/generateRandomString');
 
 const PORT = process.env.PORT || 8080;
@@ -41,6 +42,9 @@ app.set(express.static('public'));
 // Setup the body-parser middleware
 app.use(bodyParser.urlencoded({extended: true}));
 
+// Setup the cookie-parser middleware
+app.use(cookieParser());
+
 // Set home page
 /*
  *
@@ -54,7 +58,12 @@ app.use(bodyParser.urlencoded({extended: true}));
  */
 app.get('/', (req, res) => {
     // render `home.ejs` with all available siteData
-    if (siteData.isUserLoggedIn()) {
+    if (req.cookies.loggedUsername) {
+        siteData.userLoggedIn = true;
+        siteData.userLoggedInEmail = req.cookies.loggedUsername;
+    }
+
+    if (siteData.userLoggedIn) {
         res.redirect('/urls');
     } else {
         res.redirect('/login');
@@ -253,6 +262,7 @@ app.post('/login', (req, res) => {
     } else {
         siteData.userLoggedIn = true;
         siteData.userLoggedInEmail = req.body.inputUsername;
+        res.cookie('loggedUsername', req.body.inputUsername, { expires: new Date(Date.now() + 900000), httpOnly: true });
         res.redirect('/urls');
     }
 })
@@ -325,6 +335,7 @@ app.get('/register', (req, res) => {
 app.post('/logout', (req, res) => {
     siteData.userLoggedIn = false;
     siteData.userLoggedInEmail = '';
+    res.clearCookie('loggedUsername');
     res.redirect('/urls');
 })
 
