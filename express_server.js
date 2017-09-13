@@ -12,25 +12,19 @@ const PORT = process.env.PORT || 8080;
 // Local siteData - only persists while app.js is running server. 
 const siteData = {
     userLoggedIn: false,
-    userLoggedInEmail: 'chadgarrett_@hotmail.com',
-    userSessionData: [],
-    userTable: [
-        {
-            id: 1,
-            userLoginName: 'chadder04',
-            userFullName: 'Chad Garrett',
-            userPassword: '123456',
-            userEmail: 'chadgarrett_@hotmail.com'
-
+    userLoggedInUserID: '',
+    userTable: {
+        "184d30": {
+            id: "184d30",
+            userEmail: 'chadgarrett_@hotmail.com',
+            userPassword: '123456'
         }
-    ],
+    },
     urlDatabase: {
         'b2xVn2': 'http://www.lighthouselabs.ca',
         '9sm5xK': 'http://www.google.com'
     },
-    isUserLoggedIn: () => {
-        return this.userLoggedIn;
-    }
+    errorMsgs: []
 }
 
 // Set the view engine to ejs
@@ -300,8 +294,27 @@ app.get('/login', (req, res) => {
  *      sets a cookie
  *      redirects to /urls
  */
-app.post('/register', (req, res) => {
-
+app.post('/register', (req, res, next) => {
+    for (let userIndex in siteData.userTable) {
+        if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
+            siteData.errorMsgs.push('Sorry, this user already exists in the database!');
+            res.render('register', { siteData: siteData });
+            next();
+        } else {
+            let randID = generateRandomString();
+            siteData.userLoggedIn = true;
+            siteData.userLoggedInEmail = req.body.inputEmail;
+            siteData.userLoggedInUserID = randID;
+            siteData.userTable[randID] = {
+                id: randID,
+                userEmail: req.body.inputEmail,
+                userPassword: req.body.inputPassword
+            }
+            res.cookie('loggedUserID', randID, { expires: new Date(Date.now() + 900000), httpOnly: true });
+            res.redirect('/urls');
+        }
+    }
+    
 })
 
 /*
@@ -319,7 +332,7 @@ app.post('/register', (req, res) => {
  */
 app.get('/register', (req, res) => {
     // render `register.ejs` with all available siteData
-    if (!siteData.isUserLoggedIn()) {
+    if (!siteData.userLoggedIn) {
         res.render('register', { siteData: siteData })
     } else {
         res.redirect('/urls');
