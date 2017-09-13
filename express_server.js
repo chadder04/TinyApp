@@ -9,6 +9,10 @@ const generateRandomString = require('./modules/generateRandomString');
 
 const PORT = process.env.PORT || 8080;
 
+// Flag to determine whether or not to show console.log()s
+// Helpful for debugging
+const SHOW_LOGS = false;
+
 // Local siteData - only persists while app.js is running server. 
 const siteData = {
     userLoggedIn: false,
@@ -29,9 +33,6 @@ const siteData = {
 
 // Set the view engine to ejs
 app.set('view engine', 'ejs')
-
-// Set the 'public' directory to be available for us within the app
-app.set(express.static('public'));
 
 // Setup the body-parser middleware
 app.use(bodyParser.urlencoded({extended: true}));
@@ -184,7 +185,7 @@ app.get('/urls/:id', (req, res) => {
     if (siteData.userLoggedIn) {
         res.render('urls_show', { siteData: siteData, currentID: req.params.id })
     } else {
-        console.log('redirect..');
+        if (SHOW_LOGS) { console.log('redirecting..'); }
         res.redirect('/login');
     }
 })
@@ -253,6 +254,7 @@ app.get('/u/:id', (req, res) => {
 app.post('/login', (req, res) => {
     let whiteSpaceRegExp = /^\s*$/;
     for (let userIndex in siteData.userTable) {
+        if (SHOW_LOGS) { console.log(userIndex) }
         if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
             siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to login!');
             res.status(400);
@@ -268,12 +270,11 @@ app.post('/login', (req, res) => {
                 res.status(403);
                 return res.render('login', { siteData: siteData });
             }
-        } else {
-            siteData.errorMsgs.push('Sorry, this user does not exist in the database!');
-            res.status(403);
-            return res.render('login', { siteData: siteData });
         }
     }
+    siteData.errorMsgs.push('Sorry, this user does not exist in the database!');
+    res.status(403);
+    return res.render('login', { siteData: siteData });
 })
 
 /*
@@ -290,6 +291,7 @@ app.post('/login', (req, res) => {
 app.get('/login', (req, res) => {
     // render `login.ejs` with all available siteData
     if (!siteData.userLoggedIn) {
+        if (SHOW_LOGS) { console.log(siteData) }
         res.render('login', { siteData: siteData })
     } else {
         res.redirect('/urls');
@@ -311,6 +313,8 @@ app.get('/login', (req, res) => {
  */
 app.post('/register', (req, res, next) => {
     let whiteSpaceRegExp = /^\s*$/;
+    let randID = generateRandomString();
+
     for (let userIndex in siteData.userTable) {
         if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
             siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to register!');
@@ -320,20 +324,19 @@ app.post('/register', (req, res, next) => {
             siteData.errorMsgs.push('Sorry, this user already exists in the database!');
             res.status(400);
             return res.render('register', { siteData: siteData });
-        } else {
-            let randID = generateRandomString();
-            siteData.userLoggedIn = true;
-            siteData.userLoggedInUserID = randID;
-            siteData.userTable[randID] = {
-                id: randID,
-                userEmail: req.body.inputEmail,
-                userPassword: req.body.inputPassword
-            }
-            res.cookie('loggedUserID', randID, { expires: new Date(Date.now() + 900000), httpOnly: true });
-            return res.redirect('/urls');
-        }
+        } 
     }
     
+    siteData.userLoggedIn = true;
+    siteData.userLoggedInUserID = randID;
+    siteData.userTable[randID] = {
+        id: randID,
+        userEmail: req.body.inputEmail,
+        userPassword: req.body.inputPassword
+    }
+    res.cookie('loggedUserID', randID, { expires: new Date(Date.now() + 900000), httpOnly: true });
+    if (SHOW_LOGS) { console.log(siteData) }
+    return res.redirect('/urls');
 })
 
 /*
