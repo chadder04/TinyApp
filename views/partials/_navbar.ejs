@@ -9,14 +9,8 @@
                     </ul>
                 </form>
             <% } else { %>
-                <form method="POST" action="/login" class="form-inline">
-                    <div class="form-group">
-                        <label class="sr-only" for="exampleInputEmail3">Username</label>
-                        <input type="text" class="form-control" id="inputUsername" name="inputUsername" placeholder="Username" required>
-                    </div>
-                    <button type="submit" class="btn btn-default">Sign in</button>
-                    <a href="/register" class="btn btn-default">Register</a>
-                </form>
+                <a href="/login" class="btn btn-default">Sign in</a>
+                <a href="/register" class="btn btn-default">Register</a>
             <% } %>
         </div>
         <h3 class="text-muted">TinyApp URL Shortener</h3>
