@@ -296,7 +296,11 @@ app.get('/login', (req, res) => {
  */
 app.post('/register', (req, res, next) => {
     for (let userIndex in siteData.userTable) {
-        if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
+        let whiteSpaceRegExp = /^\s*$/;
+        if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
+            siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to register!');
+            return res.render('register', { siteData: siteData });
+        } else if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
             siteData.errorMsgs.push('Sorry, this user already exists in the database!');
             return res.render('register', { siteData: siteData });
         } else {
