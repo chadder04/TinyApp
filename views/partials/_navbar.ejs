@@ -4,7 +4,7 @@
             <% if (siteData.userLoggedIn) { %>
                 <form method="POST" action="/logout" class="form-inline">
                     <ul class="nav nav-pills pull-right">
-                        <li role="presentation"><p class="navbar-text"><%= siteData.userLoggedInEmail %></p></li>
+                        <li role="presentation"><p class="navbar-text"><%= siteData.userTable[siteData.userLoggedInUserID].userEmail %></p></li>
                         <li role="presentation"><button type="submit" class="btn logout" name="logout" >Logout</button></li>
                     </ul>
                 </form>
