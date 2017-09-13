@@ -52,9 +52,9 @@ app.use(cookieParser());
  */
 app.get('/', (req, res) => {
     // render `home.ejs` with all available siteData
-    if (req.cookies.loggedUsername) {
+    if (req.cookies.loggedUserID) {
         siteData.userLoggedIn = true;
-        siteData.userLoggedInEmail = req.cookies.loggedUsername;
+        siteData.userLoggedInUserID = req.cookies.loggedUserID;
     }
 
     if (siteData.userLoggedIn) {
@@ -251,13 +251,22 @@ app.get('/u/:id', (req, res) => {
  *      returns HTML with a relevant error message
  */
 app.post('/login', (req, res) => {
-    if (!req.body.inputUsername) {
-        res.render('errors_index', { errorMsg: 'Sorry, you must enter an appropriate username!', siteData: siteData });
-    } else {
-        siteData.userLoggedIn = true;
-        siteData.userLoggedInEmail = req.body.inputUsername;
-        res.cookie('loggedUsername', req.body.inputUsername, { expires: new Date(Date.now() + 900000), httpOnly: true });
-        res.redirect('/urls');
+    let whiteSpaceRegExp = /^\s*$/;
+    for (userIndex in siteData.userTable) {
+        if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
+            siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to login!');
+            res.status(400);
+            return res.render('login', { siteData: siteData });
+        } else if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
+            siteData.userLoggedIn = true;
+            siteData.userLoggedInUserID = siteData.userTable[userIndex].id;
+            res.cookie('loggedUserID', siteData.userTable[userIndex].id, { expires: new Date(Date.now() + 900000), httpOnly: true });
+            return res.redirect('/urls');
+        } else {
+            siteData.errorMsgs.push('Sorry, this user does not exist in the database!');
+            res.status(400);
+            return res.render('login', { siteData: siteData });
+        }
     }
 })
 
@@ -295,8 +304,8 @@ app.get('/login', (req, res) => {
  *      redirects to /urls
  */
 app.post('/register', (req, res, next) => {
+    let whiteSpaceRegExp = /^\s*$/;
     for (let userIndex in siteData.userTable) {
-        let whiteSpaceRegExp = /^\s*$/;
         if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
             siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to register!');
             res.status(400);
@@ -308,7 +317,6 @@ app.post('/register', (req, res, next) => {
         } else {
             let randID = generateRandomString();
             siteData.userLoggedIn = true;
-            siteData.userLoggedInEmail = req.body.inputEmail;
             siteData.userLoggedInUserID = randID;
             siteData.userTable[randID] = {
                 id: randID,
