@@ -298,8 +298,7 @@ app.post('/register', (req, res, next) => {
     for (let userIndex in siteData.userTable) {
         if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
             siteData.errorMsgs.push('Sorry, this user already exists in the database!');
-            res.render('register', { siteData: siteData });
-            next();
+            return res.render('register', { siteData: siteData });
         } else {
             let randID = generateRandomString();
             siteData.userLoggedIn = true;
@@ -311,7 +310,7 @@ app.post('/register', (req, res, next) => {
                 userPassword: req.body.inputPassword
             }
             res.cookie('loggedUserID', randID, { expires: new Date(Date.now() + 900000), httpOnly: true });
-            res.redirect('/urls');
+            return res.redirect('/urls');
         }
     }
     
