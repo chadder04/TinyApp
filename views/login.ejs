@@ -14,16 +14,7 @@
             <p class="lead">Check out your shortened urls below!</p>
         </div>
 
-        <% if (siteData.errorMsgs.length > 0) { %>
-            <div class="row">
-                <div class="col-lg-12">
-                    <% for (errorMsgIndex in siteData.errorMsgs) { %>
-                        <div class="alert alert-danger" role="alert"><%= siteData.errorMsgs[errorMsgIndex] %></div>
-                        <% delete siteData.errorMsgs[errorMsgIndex] %>
-                    <% } %>
-                </div>
-            </div>
-        <% } %>
+        <%- include('partials/_errors') %>
 
         <div class="row">
             <div class="col-lg-12">
