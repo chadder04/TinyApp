@@ -4,6 +4,7 @@
 const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
+const bcrypt = require("bcrypt");
 const cookieParser = require('cookie-parser');
 const generateRandomString = require('./modules/generateRandomString');
 const getUserURLs = require('./modules/getUserURLs');
@@ -16,8 +17,6 @@ const SHOW_LOGS = false;
 
 // Local siteData - only persists while app.js is running server. 
 const siteData = {
-    userLoggedIn: false,
-    userLoggedInUserID: '',
     userTable: {
         "184d30": {
             id: "184d30",
