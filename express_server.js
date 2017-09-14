@@ -41,6 +41,18 @@ const siteData = {
             dateCreated: new Date(),
             visits: 0 }
     },
+    urlVisitsDatabase: [
+        { 
+            visitorID: '184d30',
+            shortURL: 'b2xVn2',
+            dateVisited: new Date()
+        },
+        {
+            visitorID: '184d31',
+            shortURL: '9sm5xK',
+            dateVisited: new Date()
+        }
+    ],
     errorMsgs: []
 }
 
@@ -75,7 +87,6 @@ app.use(function (request, response, next) {
  * if user is logged in:
  *  (Minor) redirect to /urls
  * if user is not logged in:
- * 
  *  (Minor) redirect to /login
  * 
  */
@@ -113,7 +124,8 @@ app.post('/urls', (req, res) => {
         }
         return res.redirect('/urls/' + randString);
     } else {
-        res.redirect('/login');
+        siteData.errorMsgs.push('Error - you must be signed in to save a new TinyURL!');
+        return res.redirect('/login');
     }
 })
 
@@ -141,9 +153,10 @@ app.post('/urls/:id', (req, res) => {
         }
 
         siteData.urlDatabase[req.params.id].longURL = req.body.inputLongURL;
-        res.redirect('/urls');
+        return res.redirect('/urls');
     } else {
-        res.redirect('/login');
+        siteData.errorMsgs.push('Sorry, you must be signed in to update TinyURL addresses!');
+        return res.redirect('/login');
     }
 })
 
@@ -173,11 +186,11 @@ app.post('/urls/:id/delete', (req, res) => {
             return res.redirect('/urls');  
         }
 
-        
         delete siteData.urlDatabase[req.params.id];
-        res.redirect('/urls');
+        return res.redirect('/urls');
     } else {
-        res.redirect('/login');
+        siteData.errorMsgs.push('Sorry, you must be signed in to delete TinyURL addresses!');
+        return res.redirect('/login');
     }
 })
 
@@ -239,7 +252,7 @@ app.get('/urls/:id', (req, res) => {
 
         return res.render('urls_show', { siteData: siteData, currentID: req.params.id })
     } else {
-        if (SHOW_LOGS) { console.log('redirecting..'); }
+        siteData.errorMsgs.push('Sorry, you must be logged in to view this TinyURL record!');
         res.redirect('/login');
     }
 })
@@ -270,6 +283,7 @@ app.get('/urls', (req, res) => {
         res.render('urls_index', {  siteData: siteData,
                                     userOwnedURLs: getUserURLs(siteData.urlDatabase, req.session.userLoggedInUserID) })
     } else {
+        siteData.errorMsgs.push('Sorry, you must be logged in to view your TinyURL records!');
         res.redirect('/login');
     }
 })
