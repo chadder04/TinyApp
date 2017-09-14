@@ -5,7 +5,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const generateRandomString = require('./modules/generateRandomString');
 const getUserURLs = require('./modules/getUserURLs');
 
