@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 8080;
 
 // Flag to determine whether or not to show console.log()s
 // Helpful for debugging
-const SHOW_LOGS = false;
+const SHOW_LOGS = true;
 
 // Local siteData - only persists while app.js is running server. 
 const siteData = {
@@ -21,11 +21,11 @@ const siteData = {
         "184d30": {
             id: "184d30",
             userEmail: 'chadgarrett_@hotmail.com',
-            userPassword: 'okok' },
+            userPassword: '$2a$10$M5Q3ZCce3SG7sbRXfHxC8OnYtluUBNwhkep2OG5/MUdhVfKCPLfFO' },
         "184d31": {
             id: "184d31",
             userEmail: 'chadder@chadder.com',
-            userPassword: 'okok' }
+            userPassword: '$2a$10$M5Q3ZCce3SG7sbRXfHxC8OnYtluUBNwhkep2OG5/MUdhVfKCPLfFO' }
     },
     urlDatabase: {
         'b2xVn2': {
@@ -311,7 +311,7 @@ app.post('/login', (req, res) => {
             res.status(400);
             return res.render('login', { siteData: siteData });
         } else if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
-            if (req.body.inputPassword === siteData.userTable[userIndex].userPassword) {
+            if (bcrypt.compareSync(req.body.inputPassword, siteData.userTable[userIndex].userPassword)) {
                 res.locals.userLoggedInUserID = siteData.userTable[userIndex].id;
                 res.cookie('loggedUserID', siteData.userTable[userIndex].id, { expires: new Date(Date.now() + 900000), httpOnly: true });
                 return res.redirect('/');
@@ -381,7 +381,7 @@ app.post('/register', (req, res, next) => {
     siteData.userTable[randID] = {
         id: randID,
         userEmail: req.body.inputEmail,
-        userPassword: req.body.inputPassword
+        userPassword: bcrypt.hashSync(req.body.inputPassword, 10)
     }
     res.cookie('loggedUserID', randID, { expires: new Date(Date.now() + 900000), httpOnly: true });
     if (SHOW_LOGS) { console.log(siteData) }
