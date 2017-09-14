@@ -6,6 +6,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const cookieSession = require('cookie-session');
+const methodOverride = require('method-override');
 const generateRandomString = require('./modules/generateRandomString');
 const getUserURLs = require('./modules/getUserURLs');
 
@@ -13,7 +14,7 @@ const PORT = process.env.PORT || 8080;
 
 // Flag to determine whether or not to show console.log()s
 // Helpful for debugging
-const SHOW_LOGS = false;
+const SHOW_LOGS = true;
 
 // Local siteData - only persists while app.js is running server. 
 const siteData = {
@@ -62,6 +63,9 @@ app.set('view engine', 'ejs')
 // Setup the body-parser middleware
 app.use(bodyParser.urlencoded({extended: true}));
 
+// override with POST having ?_method=DELETE
+app.use(methodOverride('_method'));
+
 // Setup the cookie-session middleware
 app.use(cookieSession({
     name: 'session',
@@ -73,9 +77,7 @@ app.use(cookieSession({
 
 // Pass userLoggedInUserID to templates using local variables
 app.use(function (request, response, next) {
-    response.locals = {
-      userLoggedInUserID: request.session.userLoggedInUserID
-    };
+    response.locals.userLoggedInUserID = request.session.userLoggedInUserID;
     next();
   });
 
@@ -120,6 +122,7 @@ app.post('/urls', (req, res) => {
             id: randString,
             longURL: req.body.inputLongURL,
             ownerID: req.session.userLoggedInUserID,
+            dateCreated: new Date(),
             visits: 0
         }
         return res.redirect('/urls/' + randString);
@@ -130,7 +133,7 @@ app.post('/urls', (req, res) => {
 })
 
 /*
- * POST /urls/:id
+ * PUT /urls/:id
  * 
  * if user is logged in and owns the URL for the given ID:
  *      updates the URL
@@ -140,7 +143,7 @@ app.post('/urls', (req, res) => {
  * if user is logged it but does not own the URL for the given ID:
  *      (Minor) returns HTML with a relevant error message
  */
-app.post('/urls/:id', (req, res) => {
+app.put('/urls/:id', (req, res) => {
     // render `urls.ejs` with all available siteData
     if (req.session.userLoggedInUserID) {
         if (!(req.params.id in siteData.urlDatabase)) {
@@ -163,7 +166,7 @@ app.post('/urls/:id', (req, res) => {
 
 
 /* 
- * POST /urls/:id/delete
+ * DELETE /urls/:id/
  * 
  * if user is logged in and owns the URL for the given ID:
  *      deletes the URL
@@ -173,7 +176,7 @@ app.post('/urls/:id', (req, res) => {
  * if user is logged it but does not own the URL for the given ID:
  *      (Minor) returns HTML with a relevant error message
  */
-app.post('/urls/:id/delete', (req, res) => {
+app.delete('/urls/:id', (req, res) => {
     // render `urls.ejs` with all available siteData
     if (req.session.userLoggedInUserID) {
         if (!siteData.urlDatabase[req.params.id]) {
@@ -249,7 +252,7 @@ app.get('/urls/:id', (req, res) => {
             siteData.errorMsgs.push('Sorry, the requested TinyURL does not belong to you!');
             return res.redirect('/urls'); 
         }
-
+        if (SHOW_LOGS) { console.log(siteData) }
         return res.render('urls_show', { siteData: siteData, currentID: req.params.id })
     } else {
         siteData.errorMsgs.push('Sorry, you must be logged in to view this TinyURL record!');
@@ -271,14 +274,13 @@ app.get('/urls/:id', (req, res) => {
  *  a delete button which makes a POST request to /urls/:id/delete
  *  (Stretch) the date the short URL was created
  *  (Stretch) the number of times the short URL was visited
- *  (Stretch) the number number of unique visits for the short URL
+ *  (Stretch) the number of unique visits for the short URL
  *  (Minor) a link to "Create a New Short Link" which makes a GET request to /urls/new
  *
  * if user is not logged in:
  *  returns HTML with a relevant error message
  */
 app.get('/urls', (req, res) => {
-    // render `urls.ejs` with all available siteData
     if (req.session.userLoggedInUserID) {
         res.render('urls_index', {  siteData: siteData,
                                     userOwnedURLs: getUserURLs(siteData.urlDatabase, req.session.userLoggedInUserID) })
@@ -308,6 +310,13 @@ app.get('/u/:id', (req, res) => {
         res.status(400);
         return res.redirect('/urls');
     } 
+    if (req.session.userLoggedInUserID) {
+        siteData.urlVisitsDatabase.push({
+            visitorID: req.session.userLoggedInUserID,
+            shortURL: req.params.id,
+            dateVisited: new Date()
+        });
+    }
     siteData.urlDatabase[req.params.id].visits += 1;
     res.redirect(siteData.urlDatabase[req.params.id].longURL);
 })
@@ -389,7 +398,8 @@ app.post('/register', (req, res, next) => {
             siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to register!');
             res.status(400);
             return res.render('register', { siteData: siteData });
-        } else if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
+        } 
+        if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
             siteData.errorMsgs.push('Sorry, this user already exists in the database!');
             res.status(400);
             return res.render('register', { siteData: siteData });
@@ -440,13 +450,6 @@ app.post('/logout', (req, res) => {
     res.clearCookie('loggedUserID');
     res.redirect('/urls');
 })
-
-app.get('/logout', (req, res) => {
-    req.session.userLoggedInUserID = null;
-    res.clearCookie('loggedUserID');
-    res.redirect('/urls');
-})
-
 
 app.listen(PORT, () => {
     console.log(`HTTP Server Running - Listening on Port ${PORT}`)
