@@ -34,13 +34,14 @@
                                 <th>Tiny URL</th>
                                 <th>Long URL</th>
                                 <th>Visits</th>
+                                <th>Unique Visits</th>
                                 <th><span class="pull-right">Actions</span></th>
                             </tr>
                         </thead>
                         <tbody>
                             <% if (Object.keys(userOwnedURLs).length === 0) { %>
                                 <tr>
-                                    <td colspan="5"><span>Sorry, there are no TinyURLs created by you in the database at this time!</span></td>
+                                    <td colspan="6"><span>Sorry, there are no TinyURLs created by you in the database at this time!</span></td>
                                 </tr>
                             <% } else { %>
                                 <% for (key in userOwnedURLs) { %>
@@ -49,6 +50,7 @@
                                         <td><%= key %></td>
                                         <td><%= userOwnedURLs[key].longURL %></td>
                                         <td><%= userOwnedURLs[key].visits %></td>
+                                        <td><%= userOwnedURLs[key].uniqueVisitorIDs.size %></td>
                                         <td>
                                             <div class="btn-group pull-right" role="group" aria-label="...">
                                                 <form method="POST" action="/urls/<%= key %>?_method=DELETE">
