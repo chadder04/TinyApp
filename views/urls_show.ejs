@@ -19,24 +19,37 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="list-group pull-right">
-                    <a href="/urls" role="button" class="btn btn-info">View All TinyURLs</a>
+                    <a href="/u/<%= currentID %>" role="button" class="btn btn-info" target="_blank">Follow</a>
+                    <a href="/urls" role="button" class="btn btn-primary">View All TinyURLs</a>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-lg-12">
+            <div class="col-lg-12 list-group">
                 <form  method="POST" action="/urls/<%= currentID %>?_method=PUT" class="form-horizontal">
                     <div class="form-group">
-                        <label for="inputEmail3" class="col-sm-2 control-label">TinyURL ID</label>
+                        <label for="inputTinyURLID" class="col-sm-2 control-label">TinyURL ID</label>
                         <div class="col-sm-10">
                         <input type="text" class="form-control" id="inputTinyURLID" placeholder="TinyURL ID" value="<%= currentID %>" disabled>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="inputPassword3" class="col-sm-2 control-label">Long URL</label>
+                        <label for="inputLongURL" class="col-sm-2 control-label">Long URL</label>
                         <div class="col-sm-10">
                         <input type="text" class="form-control" id="inputLongURL" name="inputLongURL" placeholder="Long URL Here" value="<%= siteData.urlDatabase[currentID].longURL %>">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputVisits" class="col-sm-2 control-label">Visits</label>
+                        <div class="col-sm-10">
+                        <input type="text" class="form-control" id="inputVisits" name="inputVisits" value="<%= siteData.urlDatabase[currentID].visits %>" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputVisits" class="col-sm-2 control-label">Unique Visits</label>
+                        <div class="col-sm-10">
+                        <input type="text" class="form-control" id="inputVisits" name="inputVisits" value="<%= siteData.urlDatabase[currentID].uniqueVisitorIDs.size %>" disabled>
                         </div>
                     </div>
                     <div class="form-group">
@@ -45,6 +58,35 @@
                         </div>
                     </div>
                     </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="list-group">
+                    <table class="table table-bordered table-hover table-striped">
+                        <thead>
+                            <tr>
+                                <th>Visitor ID</th>
+                                <th>Date/Time Visited</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (Object.keys(visitHistory).length === 0) { %>
+                                <tr>
+                                    <td colspan="2"><span>Sorry, there are no visitor logs for this TinyURL!</span></td>
+                                </tr>
+                            <% } else { %>
+                                <% for (key in visitHistory) { %>
+                                    <tr>
+                                        <td><%= visitHistory[key].visitorID %></td>
+                                        <td><%= visitHistory[key].dateVisited %></td>
+                                    </tr>
+                                <% } %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
