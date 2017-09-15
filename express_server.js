@@ -2,7 +2,6 @@
 
 // Require and Instantiate express
 const express = require('express');
-const app = express();
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
 const cookieSession = require('cookie-session');
@@ -11,6 +10,7 @@ const generateRandomString = require('./modules/generateRandomString');
 const getUserURLs = require('./modules/getUserURLs');
 const getURLVisits = require('./modules/getURLVisits');
 
+const app = express();
 const PORT = 8080;
 
 // Flag to determine whether or not to show console.log()s
@@ -50,15 +50,17 @@ app.use(methodOverride('_method'));
 // Setup the cookie-session middleware
 app.use(cookieSession({
   name: 'session',
-  keys: ['key1', 'key2'],
-  
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000
+  keys: ['key']
 }));
 
-// Pass userLoggedInUserID to templates using local variables
 app.use(function (req, res, next) {
-  res.locals.userLoggedInUserID = req.session.userLoggedInUserID;
+  res.locals.isLoggedIn = false;
+
+  if (req.session.userID && req.session.userID in siteData.userTable) {
+    res.locals.user = siteData.userTable[req.session.userID];
+    res.locals.isLoggedIn = true;
+  }
+  
   next();
 });
 
@@ -73,7 +75,7 @@ app.use(function (req, res, next) {
  * 
  */
 app.get('/', (req, res) => {
-  if (req.session.userLoggedInUserID) {
+  if (res.locals.isLoggedIn) {
     res.redirect('/urls');
   } else {
     res.redirect('/login');
@@ -92,7 +94,7 @@ app.get('/', (req, res) => {
  *  (Minor) returns HTML with a relevant error message
  */
 app.post('/urls', (req, res) => {
-  if (req.session.userLoggedInUserID) {
+  if (res.locals.isLoggedIn) {
     let randString = generateRandomString();
     if (randString in siteData.urlDatabase) {
       randString = generateRandomString();
@@ -100,7 +102,7 @@ app.post('/urls', (req, res) => {
     siteData.urlDatabase[randString] = {
       id: randString,
       longURL: req.body.inputLongURL,
-      ownerID: req.session.userLoggedInUserID,
+      ownerID: res.locals.user.id,
       dateCreated: new Date(),
       visits: 0,
       uniqueVisitorIDs: new Set()
@@ -124,12 +126,12 @@ app.post('/urls', (req, res) => {
  *      (Minor) returns HTML with a relevant error message
  */
 app.put('/urls/:id', (req, res) => {
-  if (req.session.userLoggedInUserID) {
+  if (res.locals.isLoggedIn) {
     if (!(req.params.id in siteData.urlDatabase)) {
       siteData.errorMsgs.push('Sorry, the requested TinyURL does not exist!');
       return res.redirect('/urls');
     }
-    if (siteData.urlDatabase[req.params.id].ownerID !== req.session.userLoggedInUserID) {
+    if (siteData.urlDatabase[req.params.id].ownerID !== res.locals.user.id) {
       siteData.errorMsgs.push('Sorry, only the owner may update their TinyURLs!');
       return res.redirect('/urls');
     }
@@ -156,13 +158,13 @@ app.put('/urls/:id', (req, res) => {
  *      (Minor) returns HTML with a relevant error message
  */
 app.delete('/urls/:id', (req, res) => {
-  if (req.session.userLoggedInUserID) {
+  if (res.locals.isLoggedIn) {
     if (!siteData.urlDatabase[req.params.id]) {
       siteData.errorMsgs.push('Sorry, the requested TinyURL does not exist!');
       return res.redirect('/urls');
     }
 
-    if (siteData.urlDatabase[req.params.id].ownerID !== req.session.userLoggedInUserID) {
+    if (siteData.urlDatabase[req.params.id].ownerID !== res.locals.user.id) {
       siteData.errorMsgs.push('Sorry, you may not delete a TinyURL that you are not the owner!');
       return res.redirect('/urls');
     }
@@ -188,7 +190,7 @@ app.delete('/urls/:id', (req, res) => {
  *  redirects to the /login page
  */
 app.get('/urls/new', (req, res) => {
-  if (req.session.userLoggedInUserID) {
+  if (res.locals.isLoggedIn) {
     res.render('urls_new', { siteData: siteData });
   } else {
     res.redirect('/login');
@@ -218,20 +220,18 @@ app.get('/urls/new', (req, res) => {
  */
 
 app.get('/urls/:id', (req, res) => {
-  if (req.session.userLoggedInUserID) {
+  if (res.locals.isLoggedIn) {
     if (!(req.params.id in siteData.urlDatabase)) {
       siteData.errorMsgs.push('Sorry, the requested TinyURL does not exist!');
       return res.redirect('/urls');
     }
 
-    if (siteData.urlDatabase[req.params.id].ownerID !== req.session.userLoggedInUserID) {
+    if (siteData.urlDatabase[req.params.id].ownerID !== res.locals.user.id) {
       siteData.errorMsgs.push('Sorry, the requested TinyURL does not belong to you!');
       return res.redirect('/urls');
     }
-    if (SHOW_LOGS) { console.log(siteData); }
-    return res.render('urls_show', {    siteData: siteData,
-      currentID: req.params.id,
-      visitHistory: getURLVisits(siteData.urlVisitsDatabase, req.params.id) });
+
+    return res.render('urls_show', { siteData: siteData, currentID: req.params.id, visitHistory: getURLVisits(siteData.urlVisitsDatabase, req.params.id) });
   } else {
     siteData.errorMsgs.push('Sorry, you must be logged in to view this TinyURL record!');
     res.redirect('/login');
@@ -259,8 +259,8 @@ app.get('/urls/:id', (req, res) => {
  *  returns HTML with a relevant error message
  */
 app.get('/urls', (req, res) => {
-  if (req.session.userLoggedInUserID) {
-    res.render('urls_index', {  siteData: siteData, userOwnedURLs: getUserURLs(siteData.urlDatabase, req.session.userLoggedInUserID) });
+  if (res.locals.isLoggedIn) {
+    res.render('urls_index', {  siteData: siteData, userOwnedURLs: getUserURLs(siteData.urlDatabase, res.locals.user.id) });
   } else {
     siteData.errorMsgs.push('Sorry, you must be logged in to view your TinyURL records!');
     res.redirect('/login');
@@ -288,8 +288,8 @@ app.get('/u/:id', (req, res) => {
     res.status(400);
     return res.redirect('/urls');
   }
-  if (req.session.userLoggedInUserID) {
-    visitorID = req.session.userLoggedInUserID;
+  if (res.locals.isLoggedIn) {
+    visitorID = res.locals.user.id;
   } else {
     if (req.session.visitorID) {
       visitorID = req.session.visitorID;
@@ -321,15 +321,14 @@ app.get('/u/:id', (req, res) => {
 app.post('/login', (req, res) => {
   let whiteSpaceRegExp = /^\s*$/;
   for (let userIndex in siteData.userTable) {
-    if (SHOW_LOGS) { console.log(userIndex); }
     if (whiteSpaceRegExp.test(req.body.inputEmail) || whiteSpaceRegExp.test(req.body.inputPassword)) {
       siteData.errorMsgs.push('Sorry, you must enter a valid username and email address to login!');
       res.status(400);
       return res.render('login', { siteData: siteData });
     } else if (req.body.inputEmail === siteData.userTable[userIndex].userEmail) {
       if (bcrypt.compareSync(req.body.inputPassword, siteData.userTable[userIndex].userPassword)) {
-        req.session.userLoggedInUserID = siteData.userTable[userIndex].id;
-        res.cookie('loggedUserID', siteData.userTable[userIndex].id, { expires: new Date(Date.now() + 900000), httpOnly: true });
+        req.session.userID = userIndex;
+        res.locals.user = siteData.userTable[userIndex];
         return res.redirect('/');
       } else {
         siteData.errorMsgs.push('Sorry, username or password are incorrect!');
@@ -355,8 +354,7 @@ app.post('/login', (req, res) => {
  *      submit button that makes a POST request to /login
  */
 app.get('/login', (req, res) => {
-  if (!req.session.userLoggedInUserID) {
-    if (SHOW_LOGS) { console.log(siteData); }
+  if (!res.locals.isLoggedIn) {
     res.render('login', { siteData: siteData });
   } else {
     res.redirect('/urls');
@@ -393,13 +391,12 @@ app.post('/register', (req, res, next) => {
     }
   }
     
-  req.session.userLoggedInUserID = randID;
   siteData.userTable[randID] = {
     id: randID,
     userEmail: req.body.inputEmail,
     userPassword: bcrypt.hashSync(req.body.inputPassword, 10)
   };
-  if (SHOW_LOGS) { console.log(siteData); }
+
   return res.redirect('/urls');
 });
 
@@ -417,7 +414,7 @@ app.post('/register', (req, res, next) => {
  * 
  */
 app.get('/register', (req, res) => {
-  if (!req.session.userLoggedInUserID) {
+  if (!res.locals.isLoggedIn) {
     res.render('register', { siteData: siteData });
   } else {
     res.redirect('/urls');
@@ -431,14 +428,14 @@ app.get('/register', (req, res) => {
  * redirects to /urls
  */
 app.post('/logout', (req, res) => {
-  req.session.userLoggedInUserID = null;
-  res.clearCookie('loggedUserID');
+  res.locals.isLoggedIn = false;
+  req.session = null;
   res.redirect('/');
 });
 
 app.get('/logout', (req, res) => {
-  req.session.userLoggedInUserID = null;
-  res.clearCookie('loggedUserID');
+  res.locals.isLoggedIn = false;
+  req.session = null;
   res.redirect('/');
 });
 

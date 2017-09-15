@@ -1,10 +1,10 @@
 <div class="header clearfix">
     <nav>
         <div class="pull-right">
-            <% if (userLoggedInUserID) { %>
+            <% if (isLoggedIn) { %>
                 <form method="POST" action="/logout" class="form-inline">
                     <ul class="nav nav-pills pull-right">
-                        <li role="presentation"><p class="navbar-text"><%= siteData.userTable[userLoggedInUserID].userEmail %></p></li>
+                        <li role="presentation"><p class="navbar-text"><%= user.userEmail %></p></li>
                         <li role="presentation"><button type="submit" class="btn logout" name="logout" >Logout</button></li>
                     </ul>
                 </form>
