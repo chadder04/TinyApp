@@ -24,7 +24,11 @@ TinyApp is a full stack web application built with Node, Express, and Bootstrap 
 - cookie-session
 - method-override
 
+## Dev Dependencies (optional)
+- Nodemon
+
 ## Getting Started
 
 - Install all dependencies (using the `npm install` command)
 - Run the development web server using the `node express_server.js` command.
+- Make sure you are connected to the internet, so that Bootstrap can be accessed by HTML
