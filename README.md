@@ -6,6 +6,8 @@ TinyApp is a full stack web application built with Node, Express, and Bootstrap 
 
 !["Screenshot of Login Page"](https://github.com/chadder04/TinyApp/blob/master/docs/login-page.png)
 
+!["Screenshot of Login Page Error"](https://github.com/chadder04/TinyApp/blob/master/docs/login-page-error.png)
+
 !["Screenshot of TinyURLs Page"](https://github.com/chadder04/TinyApp/blob/master/docs/urls-page.png)
 
 !["Screenshot of Edit TinyURL Page"](https://github.com/chadder04/TinyApp/blob/master/docs/edit-page.png)
