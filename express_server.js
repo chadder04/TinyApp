@@ -9,12 +9,13 @@ const cookieSession = require('cookie-session');
 const methodOverride = require('method-override');
 const generateRandomString = require('./modules/generateRandomString');
 const getUserURLs = require('./modules/getUserURLs');
+const getURLVisits = require('./modules/getURLVisits');
 
 const PORT = process.env.PORT || 8080;
 
 // Flag to determine whether or not to show console.log()s
 // Helpful for debugging
-const SHOW_LOGS = true;
+const SHOW_LOGS = false;
 
 // Local siteData - only persists while app.js is running server. 
 const siteData = {
@@ -34,26 +35,17 @@ const siteData = {
             longURL: 'http://www.lighthouselabs.ca',
             ownerID: '184d30',
             dateCreated: new Date(),
-            visits: 0 },
+            visits: 1,
+            uniqueVisitorIDs: new Set() },
         '9sm5xK': {
             id: '9sm5xK',
             longURL: 'http://www.google.ca',
             ownerID: '184d31',
             dateCreated: new Date(),
-            visits: 0 }
+            visits: 1,
+            uniqueVisitorIDs: new Set() }
     },
-    urlVisitsDatabase: [
-        { 
-            visitorID: '184d30',
-            shortURL: 'b2xVn2',
-            dateVisited: new Date()
-        },
-        {
-            visitorID: '184d31',
-            shortURL: '9sm5xK',
-            dateVisited: new Date()
-        }
-    ],
+    urlVisitsDatabase: [],
     errorMsgs: []
 }
 
@@ -123,7 +115,8 @@ app.post('/urls', (req, res) => {
             longURL: req.body.inputLongURL,
             ownerID: req.session.userLoggedInUserID,
             dateCreated: new Date(),
-            visits: 0
+            visits: 0,
+            uniqueVisitorIDs: new Set()
         }
         return res.redirect('/urls/' + randString);
     } else {
@@ -253,7 +246,9 @@ app.get('/urls/:id', (req, res) => {
             return res.redirect('/urls'); 
         }
         if (SHOW_LOGS) { console.log(siteData) }
-        return res.render('urls_show', { siteData: siteData, currentID: req.params.id })
+        return res.render('urls_show', {    siteData: siteData, 
+                                            currentID: req.params.id,
+                                            visitHistory: getURLVisits(siteData.urlVisitsDatabase, req.params.id) })
     } else {
         siteData.errorMsgs.push('Sorry, you must be logged in to view this TinyURL record!');
         res.redirect('/login');
@@ -283,7 +278,8 @@ app.get('/urls/:id', (req, res) => {
 app.get('/urls', (req, res) => {
     if (req.session.userLoggedInUserID) {
         res.render('urls_index', {  siteData: siteData,
-                                    userOwnedURLs: getUserURLs(siteData.urlDatabase, req.session.userLoggedInUserID) })
+                                    userOwnedURLs: getUserURLs(siteData.urlDatabase, req.session.userLoggedInUserID),
+                                    })
     } else {
         siteData.errorMsgs.push('Sorry, you must be logged in to view your TinyURL records!');
         res.redirect('/login');
@@ -305,19 +301,30 @@ app.get('/urls', (req, res) => {
  * 
  */
 app.get('/u/:id', (req, res) => {
+    let visitorID;
     if (!(req.params.id in siteData.urlDatabase)) {
         siteData.errorMsgs.push('Sorry, the requested TinyURL does not exist in the system!');
         res.status(400);
         return res.redirect('/urls');
     } 
     if (req.session.userLoggedInUserID) {
-        siteData.urlVisitsDatabase.push({
-            visitorID: req.session.userLoggedInUserID,
-            shortURL: req.params.id,
-            dateVisited: new Date()
-        });
+        visitorID = req.session.userLoggedInUserID;
+    } else {
+        if (req.session.visitorID) {
+            visitorID = req.session.visitorID;
+        } else {
+            let randID = generateRandomString();
+            visitorID = randID;
+        }
     }
+    
+    siteData.urlVisitsDatabase.push({
+        visitorID: visitorID,
+        shortURL: req.params.id,
+        dateVisited: new Date()
+    });
     siteData.urlDatabase[req.params.id].visits += 1;
+    siteData.urlDatabase[req.params.id].uniqueVisitorIDs.add(visitorID);
     res.redirect(siteData.urlDatabase[req.params.id].longURL);
 })
 
@@ -344,7 +351,7 @@ app.post('/login', (req, res) => {
                 res.cookie('loggedUserID', siteData.userTable[userIndex].id, { expires: new Date(Date.now() + 900000), httpOnly: true });
                 return res.redirect('/');
             } else {
-                siteData.errorMsgs.push('Sorry, Username and Password do not match!');
+                siteData.errorMsgs.push('Sorry, username or password are incorrect!');
                 res.status(403);
                 return res.render('login', { siteData: siteData });
             }
@@ -412,7 +419,7 @@ app.post('/register', (req, res, next) => {
         userEmail: req.body.inputEmail,
         userPassword: bcrypt.hashSync(req.body.inputPassword, 10)
     }
-    res.cookie('loggedUserID', randID, { expires: new Date(Date.now() + 900000), httpOnly: true });
+    // res.cookie('loggedUserID', randID, { expires: new Date(Date.now() + 900000), httpOnly: true });
     if (SHOW_LOGS) { console.log(siteData) }
     return res.redirect('/urls');
 })
@@ -448,7 +455,7 @@ app.get('/register', (req, res) => {
 app.post('/logout', (req, res) => {
     req.session.userLoggedInUserID = null;
     res.clearCookie('loggedUserID');
-    res.redirect('/urls');
+    res.redirect('/');
 })
 
 app.listen(PORT, () => {
