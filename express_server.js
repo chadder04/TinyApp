@@ -1,6 +1,6 @@
 "use strict";
 
-// Require and Instantiate express
+// Required modules
 const express = require('express');
 const bodyParser = require("body-parser");
 const bcrypt = require("bcrypt");
@@ -13,27 +13,9 @@ const getURLVisits = require('./modules/getURLVisits');
 const app = express();
 const PORT = 8080;
 
-// Flag to determine whether or not to show console.log()s
-// Helpful for debugging
-const SHOW_LOGS = false;
-
-// Local siteData - only persists while app.js is running server. 
 const siteData = {
-  userTable: {
-    "184d30": {
-      id: "184d30",
-      userEmail: 'chadgarrett_@hotmail.com',
-      userPassword: '$2a$10$M5Q3ZCce3SG7sbRXfHxC8OnYtluUBNwhkep2OG5/MUdhVfKCPLfFO' }
-  },
-  urlDatabase: {
-    'b2xVn2': {
-      id: 'b2xVn2',
-      longURL: 'http://www.lighthouselabs.ca',
-      ownerID: '184d30',
-      dateCreated: new Date(),
-      visits: 1,
-      uniqueVisitorIDs: new Set() }
-  },
+  userTable: {},
+  urlDatabase: {},
   urlVisitsDatabase: [],
   errorMsgs: []
 };
